@@ -6,3 +6,4 @@ uint8 gFLT
 uint8 gPR
 uint8 gPO
 uint8 gCU
+uint8 gSID

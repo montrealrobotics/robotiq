@@ -1,7 +1,17 @@
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(robotiq_2f_gripper_control)
-find_package(catkin REQUIRED COMPONENTS message_generation robotiq_ethercat roscpp rospy)
+find_package(catkin REQUIRED COMPONENTS 
+  controller_manager
+  diagnostic_updater
+  hardware_interface
+  message_generation 
+  robotiq_ethercat 
+  roscpp 
+  rospy
+)
+
+find_package(PkgConfig)
 
 #set the default path for built executables to the "bin" directory
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -31,8 +41,29 @@ generate_messages()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS message_runtime robotiq_ethercat roscpp rospy 
-  LIBRARIES ${robotiq_ethercat_LIBRARIES}
+  CATKIN_DEPENDS
+      controller_manager
+      diagnostic_updater
+      message_runtime
+      hardware_interface
+      robotiq_ethercat 
+      roscpp 
+      rospy 
+  LIBRARIES ${PROJECT_NAME}
+)
+
+add_library(${PROJECT_NAME}
+  src/${PROJECT_NAME}/robotiq_2f_gripper_api.cpp
+  src/${PROJECT_NAME}/robotiq_2f_gripper_diagnostics.cpp
+  src/${PROJECT_NAME}/robotiq_2f_gripper_hw_interface.cpp
+  src/${PROJECT_NAME}/robotiq_2f_gripper_ros.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+add_dependencies(${PROJECT_NAME}
+  ${PROJECT_NAME}_gencfg
+  ${catkin_EXPORTED_TARGETS}
 )
 
 include_directories(
@@ -50,7 +81,21 @@ target_link_libraries(robotiq_2f_gripper_ethercat_node
   ${catkin_LIBRARIES}
 )
 
-add_dependencies(robotiq_2f_gripper_ethercat_node ${PROJECT_NAME}_generate_messages_cpp)
+add_executable(robotiq_2f_gripper_tcp_node
+  src/${PROJECT_NAME}/robotiq_2f_gripper_tcp_client.cpp
+  src/robotiq_2f_gripper_tcp_node.cpp
+)
+
+target_link_libraries(robotiq_2f_gripper_tcp_node
+   ${PROJECT_NAME}
+   ${catkin_LIBRARIES}
+)
+
+add_dependencies(robotiq_2f_gripper_ethercat_node 
+  ${PROJECT_NAME}_generate_messages_cpp)
+  
+add_dependencies(robotiq_2f_gripper_tcp_node 
+  ${PROJECT_NAME}_generate_messages_cpp)
 
 #############
 ## Install ##
@@ -65,7 +110,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 install(
-  TARGETS robotiq_2f_gripper_ethercat_node
+  TARGETS robotiq_2f_gripper_ethercat_node ${PROJECT_NAME} robotiq_2f_gripper_tcp_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -76,3 +121,7 @@ install(PROGRAMS nodes/Robotiq2FGripperRtuNode.py nodes/Robotiq2FGripperSimpleCo
 
 install(PROGRAMS src/${PROJECT_NAME}/robotiq_2f_gripper_ctrl.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
