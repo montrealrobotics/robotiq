@@ -78,7 +78,7 @@ void Robotiq2FGripperHWInterface::configure(hardware_interface::JointStateInterf
 
 void Robotiq2FGripperHWInterface::read(ros::Duration d)
 {
-    hw_driver_->read();
+//    hw_driver_->read();
     hw_driver_->getPosition(&j_curr_pos_[0]);
     hw_driver_->getCommandPos(&j_cmd_pos_[0]);
 

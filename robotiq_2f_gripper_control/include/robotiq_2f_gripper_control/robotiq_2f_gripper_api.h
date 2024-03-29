@@ -28,6 +28,7 @@
 #include <robotiq_2f_gripper_control/robotiq_2f_gripper_client_base.h>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 
 namespace robotiq
 {
@@ -55,31 +56,31 @@ public:
     void setInitialization(InitializationMode mode);
     void setActionMode(ActionMode mode);
     void setEmergencyRelease(EmergencyRelease release);
-    void setPosition(const double &pos);
-    void setVelocity(const double &vel);
-    void setForce(const double &f);
-    void setSid(const double &sid);
+    void setPosition(const int &pos);
+    void setVelocity(const int &vel);
+    void setForce(const int &f);
+    void setSid(const int &sid);
     void setRaw(const Robotiq2FGripperClientBase::GripperOutput &raw);
 
-    void getPosition(double *pos) const;
-    void getPositionCmd(double *pos) const;
-    void getCurrent(double *cur) const;
-    void getSid(double *sid);
-    void getGripperStatus(InitializationMode *gACT,  ActionMode *gGTO, MotionStatus *gSTA) const;
-    void getFaultStatus(FaultStatus *gFLT) const;
-    void getRaw(Robotiq2FGripperClientBase::GripperInput *raw) const;
+    void getPosition(double *pos);
+    void getPositionCmd(double *pos);
+    void getCurrent(double *cur);
+    void getSid(int *sid);
+    void getGripperStatus(InitializationMode *gACT,  ActionMode *gGTO, MotionStatus *gSTA);
+    void getFaultStatus(FaultStatus *gFLT);
+    void getRaw(Robotiq2FGripperClientBase::GripperInput *raw);
 
-    void getCommandPos(double *pos) const;
+    void getCommandPos(double *pos);
 
     bool isInitialized();
     bool isHalted();
     bool isMoving();
     bool isEmergReleaseComplete();
 
-    void read();
-    void write(std::string &command);
-    void getData(std::string request);
-    void decode(std::string &input);
+    unsigned long read();
+    bool write(std::string &command);
+    unsigned long getData(std::string request);
+    bool decode(std::string &input);
 
 private:
     boost::shared_ptr<Robotiq2FGripperClientBase> base_;
@@ -98,12 +99,10 @@ private:
     double force_offset_;
     double cur_to_ticks_;
 
-    uint8_t *cmdBuf;
-    uint8_t *recvBuf;
+    std::unordered_map<std::string, uint8_t Robotiq2FGripperClientBase::GripperInput::*> statusMap;
+//    std::unordered_map<std::string, uint8_t> commandMap;
 
-    uint8_t recvData[100];
-    uint8_t sendData[100];
-    std::map<std::string, int> registerMap;
+    uint8_t sid;
 
 };
 

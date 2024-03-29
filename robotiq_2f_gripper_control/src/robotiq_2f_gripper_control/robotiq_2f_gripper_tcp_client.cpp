@@ -41,7 +41,7 @@ bool Robotiq2FGripperTcpClient::connectToServer(const std::string& ipAddress, in
      }
 
      // Define the server address and port
-     struct sockaddr_in serverAddress;
+     struct sockaddr_in serverAddress{};
      serverAddress.sin_family = AF_INET;
      serverAddress.sin_port = htons(port);
      inet_pton(AF_INET, ipAddress.c_str(), &serverAddress.sin_addr);
@@ -95,7 +95,7 @@ std::string Robotiq2FGripperTcpClient::readInputs() const
     // Null-terminate the received data
     buffer[bytesRead] = '\0';
 
-    return std::string(buffer);
+    return {buffer};
 }
 
 void Robotiq2FGripperTcpClient::closeConnection() {

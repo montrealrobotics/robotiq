@@ -55,7 +55,7 @@ public:
         clock_gettime(CLOCK_MONOTONIC, &last_time_);
 
         //! Start timer
-        ros::Duration desired_update_freq_ = ros::Duration(1 / loop_hz_);
+        desired_update_freq_ = ros::Duration(1 / loop_hz_);
         non_realtime_loop_ = nh_.createTimer(desired_update_freq_, &GenericHWLoop::update, this);
         ROS_DEBUG("created timer");
     }
@@ -108,8 +108,8 @@ protected:
     ros::Timer non_realtime_loop_;
     ros::Duration elapsed_time_;
     double loop_hz_;
-    struct timespec last_time_;
-    struct timespec current_time_;
+    struct timespec last_time_{};
+    struct timespec current_time_{};
 
     /** \brief ROS Controller Manager and Runner
      *
@@ -142,14 +142,14 @@ int main(int argc, char** argv)
     bool activate;
 
     nh.param<std::string>("ip", ipaddr, "127.0.0.1");
-    nh.param<int>("port", port, 1);
+    nh.param<int>("port", port, 63352);
     nh.param<bool>("activate", activate, true);
 
     // Create the hw client layer
     boost::shared_ptr<robotiq_2f_gripper_control::Robotiq2FGripperTcpClient> tcp_client
             (new robotiq_2f_gripper_control::Robotiq2FGripperTcpClient());
     tcp_client->init(pnh);
-    tcp_client->connectToServer(ipaddr, port);
+    bool started = tcp_client->connectToServer(ipaddr, port);
 
     // Create the hw api layer
     boost::shared_ptr<robotiq_2f_gripper_control::Robotiq2FGripperAPI> hw_api
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     GenericHWLoop control_loop(pnh, hw_interface);
     ROS_INFO("started");
 
-    // Wait until shutdown signal recieved
+    // Wait until shutdown signal received
     ros::waitForShutdown();
 
     return 0;

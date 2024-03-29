@@ -38,13 +38,19 @@ Robotiq2FGripperAPI::Robotiq2FGripperAPI(boost::shared_ptr<Robotiq2FGripperClien
     force_offset_ = 15;
     cur_to_ticks_ = 10;
 
-    //! Get current status
-    read();
-    command_.rACT = status_.gACT;
-    command_.rGTO = status_.gGTO;
-    command_.rPR = status_.gPR;
-    cmdBuf = sendData;
-    recvBuf = recvData;
+    sid = 0;
+
+    // Read sid from gripper on startup
+
+    // Populate the statusMap with default values (or values from your ROS message if available)
+    statusMap["ACT"] = &Robotiq2FGripperClientBase::GripperInput::gACT;
+    statusMap["GTO"] = &Robotiq2FGripperClientBase::GripperInput::gGTO;
+    statusMap["POS"] = &Robotiq2FGripperClientBase::GripperInput::gPO;
+    statusMap["STA"] = &Robotiq2FGripperClientBase::GripperInput::gSTA;
+    statusMap["PRE"] = &Robotiq2FGripperClientBase::GripperInput::gPR;
+    statusMap["OBJ"] = &Robotiq2FGripperClientBase::GripperInput::gOBJ;
+    statusMap["FLT"] = &Robotiq2FGripperClientBase::GripperInput::gFLT;
+
 }
 
 void Robotiq2FGripperAPI::setInitialization(InitializationMode mode)
@@ -65,78 +71,115 @@ void Robotiq2FGripperAPI::setEmergencyRelease(EmergencyRelease release)
     write(command);
 }
 
-void Robotiq2FGripperAPI::setPosition(const double &pos)
+void Robotiq2FGripperAPI::setPosition(const int &pos)
 {
-    std::string command = "SET POS " + std::to_string(pos_to_ticks_*(pos - pos_offset_)) + "\n";
+    std::string command = "SET POS " + std::to_string(int(pos_to_ticks_*(pos - pos_offset_))) + "\n";
     write(command);
 }
 
-void Robotiq2FGripperAPI::setVelocity(const double &vel)
+void Robotiq2FGripperAPI::setVelocity(const int &vel)
 {
-    std::string command = "SET SPE " + std::to_string(vel_to_ticks_*(vel - vel_offset_)) + "\n";
+    std::string command = "SET SPE " + std::to_string(int(vel_to_ticks_*(vel - vel_offset_))) + "\n";
     write(command);
 }
 
-void Robotiq2FGripperAPI::setForce(const double &f)
+void Robotiq2FGripperAPI::setForce(const int &f)
 {
-    std::string command = "SET FOR " + std::to_string(force_to_ticks_*(f - force_offset_)) + "\n";
+    std::string command = "SET FOR " + std::to_string(int(force_to_ticks_*(f - force_offset_))) + "\n";
     write(command);
 }
 
-void Robotiq2FGripperAPI::setSid(const double &sid)
+void Robotiq2FGripperAPI::setSid(const int &sid_p)
 {
-    std::string command =  "SET SID " + std::to_string(sid) + "\n";
+    std::string command =  "SET SID " + std::to_string(sid_p) + "\n";
     write(command);
 }
 
 void Robotiq2FGripperAPI::setRaw(const Robotiq2FGripperClientBase::GripperOutput &raw)
 {
-    std::string command = "SET POS " + std::to_string(raw.rPR) + " SPE " + std::to_string(raw.rSP) + " FOR " + std::to_string(raw.rFR) + "\n";
+    std::string command = "SET POS " + std::to_string(int(raw.rPR)) + " SPE " + std::to_string(int(raw.rSP)) + " FOR " + std::to_string(int(raw.rFR)) + "\n";
     write(command);
 }
 
-void Robotiq2FGripperAPI::getPosition(double *pos) const
+void Robotiq2FGripperAPI::getPosition(double *pos)
 {
     std::string command = "GET POS\n";
-    int gPO = 0;
-    *pos = (double)gPO/pos_to_ticks_ + pos_offset_;
+    unsigned long data_sent = getData(command);
+    if (data_sent > 0)
+    {
+        *pos = (double)status_.gPO/pos_to_ticks_ + pos_offset_;
+    }
 }
 
-void Robotiq2FGripperAPI::getPositionCmd(double *pos) const
+void Robotiq2FGripperAPI::getPositionCmd(double *pos)
 {
     std::string command = "GET PRE\n";
-    //*pos = (double)status_.gPR/pos_to_ticks_ + pos_offset_;
+    unsigned long data_sent = getData(command);
+    if (data_sent > 0)
+    {
+        *pos = (double) status_.gPR / pos_to_ticks_ + pos_offset_;
+    }
 }
 
-void Robotiq2FGripperAPI::getCurrent(double *cur) const
+void Robotiq2FGripperAPI::getCurrent(double *cur)
 {
     ;
 }
 
-void Robotiq2FGripperAPI::getSid(double *sid)
+void Robotiq2FGripperAPI::getSid(int *sid_p)
 {
     std::string command = "GET SID\n";
-    getData(command);
+    unsigned long data_sent = getData(command);
+    if (data_sent > 0)
+    {
+        *sid_p = sid;
+    }
 }
 
-void Robotiq2FGripperAPI::getGripperStatus(InitializationMode *gACT, ActionMode *gGTO, MotionStatus *gSTA) const
+void Robotiq2FGripperAPI::getGripperStatus(InitializationMode *gACT, ActionMode *gGTO, MotionStatus *gSTA)
 {
     std::string command_1 = "GET STA\n";
+    unsigned long data_sent = getData(command_1);
+    if (data_sent > 0)
+    {
+        *gSTA = (MotionStatus)status_.gSTA;
+    }
     std::string command_2 = "GET ACT\n";
+    data_sent = getData(command_2);
+    if (data_sent > 0)
+    {
+        *gACT = (InitializationMode)status_.gACT;
+    }
     std::string command_3 = "GET GTO\n";
+    data_sent = getData(command_3);
+    if (data_sent > 0)
+    {
+        *gGTO = (ActionMode)status_.gGTO;
+    }
 }
 
-void Robotiq2FGripperAPI::getFaultStatus(FaultStatus *gFLT) const
+void Robotiq2FGripperAPI::getFaultStatus(FaultStatus *gFLT)
 {
     std::string command = "GET FLT\n";
+    unsigned long data_sent = getData(command);
+    if (data_sent > 0)
+    {
+        *gFLT = (FaultStatus)status_.gFLT;
+    }
 }
 
-void Robotiq2FGripperAPI::getRaw(Robotiq2FGripperClientBase::GripperInput *raw) const
+void Robotiq2FGripperAPI::getRaw(Robotiq2FGripperClientBase::GripperInput *raw)
 {
+    std::vector<std::string> commandList = {"GET ACT\n", "GET GTO\n", "GET POS\n", "GET STA\n", "GET PRE\n"};
+
+    for (const auto& command : commandList) {
+        getData(command);
+    }
+
     *raw = status_;
 }
 
-void Robotiq2FGripperAPI::getCommandPos(double *pos) const
+void Robotiq2FGripperAPI::getCommandPos(double *pos)
 {
     *pos = (double)command_.rPR/pos_to_ticks_ + pos_offset_;
 }
@@ -161,13 +204,14 @@ bool Robotiq2FGripperAPI::isEmergReleaseComplete()
     return ((FaultStatus)status_.gFLT == ERROR_AUTOMATIC_RELEASE_COMPLETE);
 }
 
-void Robotiq2FGripperAPI::getData(std::string request)
+unsigned long Robotiq2FGripperAPI::getData(std::string request)
 {
-    write(request);
-    read();
+    bool sent = write(request);
+    unsigned long bytes_read = read();
+    return bytes_read;
 }
 
-void Robotiq2FGripperAPI::decode(std::string &input)
+bool Robotiq2FGripperAPI::decode(std::string &input)
 {
     size_t spacePos = input.find(' ');
 
@@ -175,19 +219,46 @@ void Robotiq2FGripperAPI::decode(std::string &input)
     std::string variableName = input.substr(0, spacePos);
 
     // Convert the value string to an integer
-    int value;
-    std::istringstream iss(valueStr);
-    iss >> value;
+    int value = std::stoi(valueStr);
 
+    // Convert the integer to uint8_t, assuming it fits within the range
+    auto valueUint8 = static_cast<uint8_t>(value);
+
+    auto it = statusMap.find(variableName);
+
+    if (it != statusMap.end()) {
+        status_.*(it->second) = valueUint8;
+
+//        std::cout << "Set " << variableName << " to " << static_cast<int>(valueUint8) << std::endl;
+        return true;
+    }
+
+    if (valueStr == "SID")
+    {
+        sid = valueUint8;
+//        std::cout << "Set " << valueStr << " to " << static_cast<int>(valueUint8) << std::endl;
+        return true;
+    }
+    return false;
 }
 
-void Robotiq2FGripperAPI::read()
+unsigned long Robotiq2FGripperAPI::read()
 {
     std::string response = base_->readInputs();
-    decode(response);
+    if (!response.empty())
+    {
+        decode(response);
+        return response.size();
+    }
+    else
+    {
+        return 0;
+    }
+
 }
 
-void Robotiq2FGripperAPI::write(std::string &command)
+bool Robotiq2FGripperAPI::write(std::string &command)
 {
-    base_->writeOutputs(command);
+    bool result = base_->writeOutputs(command);
+    return result;
 }
