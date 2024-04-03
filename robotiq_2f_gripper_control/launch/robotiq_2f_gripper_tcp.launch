@@ -2,12 +2,14 @@
   <arg name="gripper_name" default="gripper" />
   <arg name="port" default="63352" />
   <arg name="activate" default="True" />
-  <arg name="ipaddr" default="127.0.0.1" />
+  <arg name="ipaddr" default="192.168.1.102" />
+  <arg name="actuated_joint" default="hande_left_finger_joint" />
 
   <node pkg="robotiq_2f_gripper_control" type="robotiq_2f_gripper_tcp_node" name="gripper_server" output="screen">
       <param name="ipaddr" type="str" value="$(arg ipaddr)" />
       <param name="activate" type="bool" value="$(arg activate)" />
       <param name="port" type="int" value="$(arg port)"/>
+      <param name="actuated_joint" type="str" value="$(arg actuated_joint)"/>
       
       <remap from="output" to="/$(arg gripper_name)/output" />
       <remap from="input" to="/$(arg gripper_name)/input" />

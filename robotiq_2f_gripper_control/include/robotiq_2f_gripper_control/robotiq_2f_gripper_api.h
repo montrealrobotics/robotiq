@@ -54,9 +54,10 @@ public:
     Robotiq2FGripperAPI(boost::shared_ptr<Robotiq2FGripperClientBase> base);
 
     void setInitialization(InitializationMode mode);
+    void setMotionState(MotionStatus mode);
     void setActionMode(ActionMode mode);
     void setEmergencyRelease(EmergencyRelease release);
-    void setPosition(const int &pos);
+    void setPosition(const double &pos);
     void setVelocity(const int &vel);
     void setForce(const int &f);
     void setSid(const int &sid);
@@ -77,7 +78,7 @@ public:
     bool isMoving();
     bool isEmergReleaseComplete();
 
-    unsigned long read();
+    unsigned long read(bool if_decode=true);
     bool write(std::string &command);
     unsigned long getData(std::string request);
     bool decode(std::string &input);

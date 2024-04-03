@@ -75,6 +75,10 @@ bool Robotiq2FGripperTcpClient::writeOutputs(const std::string& output)
         return false;
     }
 
+//    for (int i = 0; i < bytesSent; ++i) {
+//        std::cout << output[i];
+//    }
+//    std::cout << std::endl;
     return true;
 }
 
@@ -95,6 +99,11 @@ std::string Robotiq2FGripperTcpClient::readInputs() const
     // Null-terminate the received data
     buffer[bytesRead] = '\0';
 
+//    for (int i = 0; i < bytesRead; ++i) {
+//        std::cout << buffer[i];
+//    }
+//    std::cout << std::endl;
+
     return {buffer};
 }
 
@@ -109,4 +118,4 @@ Robotiq2FGripperTcpClient::~Robotiq2FGripperTcpClient() {
     closeConnection();
 }
 
-} // end of robotiq_3f_gripper_control namespace
+} // end of robotiq_2f_gripper_control namespace

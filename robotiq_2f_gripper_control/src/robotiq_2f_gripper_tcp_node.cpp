@@ -141,15 +141,21 @@ int main(int argc, char** argv)
     int port;
     bool activate;
 
-    nh.param<std::string>("ip", ipaddr, "127.0.0.1");
-    nh.param<int>("port", port, 63352);
-    nh.param<bool>("activate", activate, true);
+    pnh.param<std::string>("ipaddr", ipaddr, "192.168.1.102");
+    pnh.param<int>("port", port, 63352);
+    pnh.param<bool>("activate", activate, true);
 
     // Create the hw client layer
     boost::shared_ptr<robotiq_2f_gripper_control::Robotiq2FGripperTcpClient> tcp_client
             (new robotiq_2f_gripper_control::Robotiq2FGripperTcpClient());
     tcp_client->init(pnh);
     bool started = tcp_client->connectToServer(ipaddr, port);
+    if (!started)
+    {
+        throw std::runtime_error("Could not connect to gripper.");
+    }
+
+    ROS_INFO("Tcp client started");
 
     // Create the hw api layer
     boost::shared_ptr<robotiq_2f_gripper_control::Robotiq2FGripperAPI> hw_api
@@ -159,7 +165,19 @@ int main(int argc, char** argv)
     boost::shared_ptr<robotiq_2f_gripper_control::Robotiq2FGripperHWInterface> hw_interface
             (new robotiq_2f_gripper_control::Robotiq2FGripperHWInterface(pnh, hw_api));
 
-    ROS_DEBUG("created hw interface");
+    ROS_INFO("Created hw interface");
+
+    int sid;
+    robotiq::MotionStatus motionState = robotiq::MOTION_STARTED;
+    robotiq::InitializationMode initMode = robotiq::INIT_ACTIVATION;
+
+    hw_api->getSid(&sid);
+    ROS_INFO("Gripper SID received");
+    if (activate)
+    {
+        hw_api->setMotionState(motionState);
+        hw_api->setInitialization(initMode);
+    }
 
     // Register interfaces
     hardware_interface::JointStateInterface joint_state_interface;

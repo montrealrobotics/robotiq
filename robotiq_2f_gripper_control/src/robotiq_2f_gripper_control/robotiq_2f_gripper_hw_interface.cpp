@@ -36,9 +36,11 @@ Robotiq2FGripperHWInterface::Robotiq2FGripperHWInterface(ros::NodeHandle nh, boo
     hw_name = nh.param<std::string>("hw_name", "robotiq_s");
 
     std::string prefix;
+    std::string actuated_joint;
     prefix = nh.param<std::string>("prefix", "");
 
-    joint_names_.push_back(prefix+"hande_left_finger_joint");
+    nh.param<std::string>("actuated_joint", actuated_joint, "hande_left_finger_joint");
+    joint_names_.push_back(prefix+actuated_joint);
 
     joint_names_ = nh.param< std::vector<std::string> >("joint_names", joint_names_);
 
@@ -78,16 +80,13 @@ void Robotiq2FGripperHWInterface::configure(hardware_interface::JointStateInterf
 
 void Robotiq2FGripperHWInterface::read(ros::Duration d)
 {
-//    hw_driver_->read();
     hw_driver_->getPosition(&j_curr_pos_[0]);
-    hw_driver_->getCommandPos(&j_cmd_pos_[0]);
-
     hw_diagnostics_->update();
     hw_ros_->publish();
 }
 
 void Robotiq2FGripperHWInterface::write(ros::Duration d)
 {
+    hw_driver_->getCommandPos(&j_cmd_pos_[0]);
     hw_driver_->setPosition(j_cmd_pos_[0]);
-//    hw_driver_->write();
 }
