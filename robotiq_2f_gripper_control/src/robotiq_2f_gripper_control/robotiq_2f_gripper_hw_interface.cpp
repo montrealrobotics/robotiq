@@ -87,6 +87,7 @@ void Robotiq2FGripperHWInterface::read(ros::Duration d)
 
 void Robotiq2FGripperHWInterface::write(ros::Duration d)
 {
-    hw_driver_->getCommandPos(&j_cmd_pos_[0]);
+//    ROS_INFO("1 %f", j_cmd_pos_[0]);
+//    hw_driver_->getCommandPos(&j_cmd_pos_[0]);
     hw_driver_->setPosition(j_cmd_pos_[0]);
 }
